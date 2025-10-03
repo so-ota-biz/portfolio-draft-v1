@@ -1,0 +1,7 @@
+{
+  "autoApprove": true,
+  "alwaysAllowWrites": true,
+  "filePermissions": {
+    "allowedPaths": ["**/*"]
+  }
+}
