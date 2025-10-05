@@ -427,7 +427,7 @@ graph TD
 #### 6.1.1 ユーザー（Users）
 | カラム名 | データ型 | 制約 | 説明 |
 |---------|---------|------|------|
-| id | UUID | PRIMARY KEY | ユーザーID |
+| id | BIGSERIAL | PRIMARY KEY | ユーザーID（自動採番） |
 | supabase_user_id | UUID | UNIQUE, NOT NULL | SupabaseのユーザーID |
 | email | VARCHAR(255) | UNIQUE, NOT NULL | メールアドレス |
 | created_at | TIMESTAMP | NOT NULL | 作成日時 |
@@ -436,7 +436,7 @@ graph TD
 #### 6.1.2 チャンネル（Channels）
 | カラム名 | データ型 | 制約 | 説明 |
 |---------|---------|------|------|
-| id | UUID | PRIMARY KEY | チャンネルID（内部） |
+| id | BIGSERIAL | PRIMARY KEY | チャンネルID（内部、自動採番） |
 | youtube_channel_id | VARCHAR(255) | UNIQUE, NOT NULL | YouTubeチャンネルID |
 | channel_name | VARCHAR(255) | NOT NULL | チャンネル名 |
 | channel_icon_url | TEXT | | チャンネルアイコンURL |
@@ -446,9 +446,9 @@ graph TD
 #### 6.1.3 ユーザーチャンネル関連（UserChannels）
 | カラム名 | データ型 | 制約 | 説明 |
 |---------|---------|------|------|
-| id | UUID | PRIMARY KEY | 関連ID |
-| user_id | UUID | FOREIGN KEY, NOT NULL | ユーザーID |
-| channel_id | UUID | FOREIGN KEY, NOT NULL | チャンネルID |
+| id | BIGSERIAL | PRIMARY KEY | 関連ID（自動採番） |
+| user_id | BIGINT | FOREIGN KEY, NOT NULL | ユーザーID |
+| channel_id | BIGINT | FOREIGN KEY, NOT NULL | チャンネルID |
 | memo | TEXT | | ユーザーが入力するチャンネル付随情報 |
 | created_at | TIMESTAMP | NOT NULL | 登録日時 |
 | updated_at | TIMESTAMP | NOT NULL | 更新日時 |
@@ -458,9 +458,9 @@ graph TD
 #### 6.1.4 配信予定（Streams）
 | カラム名 | データ型 | 制約 | 説明 |
 |---------|---------|------|------|
-| id | UUID | PRIMARY KEY | 配信ID（内部） |
+| id | BIGSERIAL | PRIMARY KEY | 配信ID（内部、自動採番） |
 | youtube_video_id | VARCHAR(255) | UNIQUE, NOT NULL | YouTube動画ID |
-| channel_id | UUID | FOREIGN KEY, NOT NULL | チャンネルID |
+| channel_id | BIGINT | FOREIGN KEY, NOT NULL | チャンネルID |
 | title | VARCHAR(500) | NOT NULL | 配信タイトル |
 | description | TEXT | | 配信説明 |
 | thumbnail_url | TEXT | | サムネイルURL |
@@ -474,9 +474,9 @@ graph TD
 #### 6.1.5 アーカイブ（Archives）※将来実装
 | カラム名 | データ型 | 制約 | 説明 |
 |---------|---------|------|------|
-| id | UUID | PRIMARY KEY | アーカイブID |
-| user_id | UUID | FOREIGN KEY, NOT NULL | ユーザーID |
-| stream_id | UUID | FOREIGN KEY, NOT NULL | 配信ID |
+| id | BIGSERIAL | PRIMARY KEY | アーカイブID（自動採番） |
+| user_id | BIGINT | FOREIGN KEY, NOT NULL | ユーザーID |
+| stream_id | BIGINT | FOREIGN KEY, NOT NULL | 配信ID |
 | comment | TEXT | | ユーザーコメント・感想 |
 | rating | INTEGER | | 評価（1-5など） |
 | created_at | TIMESTAMP | NOT NULL | 作成日時 |
@@ -485,8 +485,8 @@ graph TD
 #### 6.1.6 ラベル（Labels）※将来実装
 | カラム名 | データ型 | 制約 | 説明 |
 |---------|---------|------|------|
-| id | UUID | PRIMARY KEY | ラベルID |
-| user_id | UUID | FOREIGN KEY, NOT NULL | ユーザーID |
+| id | BIGSERIAL | PRIMARY KEY | ラベルID（自動採番） |
+| user_id | BIGINT | FOREIGN KEY, NOT NULL | ユーザーID |
 | name | VARCHAR(255) | NOT NULL | ラベル名 |
 | color | VARCHAR(7) | | ラベル色（HEXコード） |
 | created_at | TIMESTAMP | NOT NULL | 作成日時 |
@@ -497,9 +497,9 @@ graph TD
 #### 6.1.7 ユーザーチャンネルラベル関連（UserChannelLabels）※将来実装
 | カラム名 | データ型 | 制約 | 説明 |
 |---------|---------|------|------|
-| id | UUID | PRIMARY KEY | 関連ID |
-| user_channel_id | UUID | FOREIGN KEY, NOT NULL | ユーザーチャンネル関連ID |
-| label_id | UUID | FOREIGN KEY, NOT NULL | ラベルID |
+| id | BIGSERIAL | PRIMARY KEY | 関連ID（自動採番） |
+| user_channel_id | BIGINT | FOREIGN KEY, NOT NULL | ユーザーチャンネル関連ID |
+| label_id | BIGINT | FOREIGN KEY, NOT NULL | ラベルID |
 | created_at | TIMESTAMP | NOT NULL | 作成日時 |
 
 **制約:** (user_channel_id, label_id) に UNIQUE 制約
@@ -518,7 +518,7 @@ erDiagram
     Labels ||--o{ UserChannelLabels : "applied to"
 
     Users {
-        UUID id PK
+        BIGSERIAL id PK "auto increment"
         UUID supabase_user_id "UNIQUE, NOT NULL"
         VARCHAR email "UNIQUE, NOT NULL"
         TIMESTAMP created_at "NOT NULL"
@@ -526,7 +526,7 @@ erDiagram
     }
 
     Channels {
-        UUID id PK
+        BIGSERIAL id PK "auto increment"
         VARCHAR youtube_channel_id "UNIQUE, NOT NULL"
         VARCHAR channel_name "NOT NULL"
         TEXT channel_icon_url
@@ -535,18 +535,18 @@ erDiagram
     }
 
     UserChannels {
-        UUID id PK
-        UUID user_id FK "NOT NULL"
-        UUID channel_id FK "NOT NULL"
+        BIGSERIAL id PK "auto increment"
+        BIGINT user_id FK "NOT NULL"
+        BIGINT channel_id FK "NOT NULL"
         TEXT memo
         TIMESTAMP created_at "NOT NULL"
         TIMESTAMP updated_at "NOT NULL"
     }
 
     Streams {
-        UUID id PK
+        BIGSERIAL id PK "auto increment"
         VARCHAR youtube_video_id "UNIQUE, NOT NULL"
-        UUID channel_id FK "NOT NULL"
+        BIGINT channel_id FK "NOT NULL"
         VARCHAR title "NOT NULL"
         TEXT description
         TEXT thumbnail_url
@@ -559,9 +559,9 @@ erDiagram
     }
 
     Archives {
-        UUID id PK
-        UUID user_id FK "NOT NULL"
-        UUID stream_id FK "NOT NULL"
+        BIGSERIAL id PK "auto increment"
+        BIGINT user_id FK "NOT NULL"
+        BIGINT stream_id FK "NOT NULL"
         TEXT comment
         INTEGER rating
         TIMESTAMP created_at "NOT NULL"
@@ -569,8 +569,8 @@ erDiagram
     }
 
     Labels {
-        UUID id PK
-        UUID user_id FK "NOT NULL"
+        BIGSERIAL id PK "auto increment"
+        BIGINT user_id FK "NOT NULL"
         VARCHAR name "NOT NULL"
         VARCHAR color
         TIMESTAMP created_at "NOT NULL"
@@ -578,9 +578,9 @@ erDiagram
     }
 
     UserChannelLabels {
-        UUID id PK
-        UUID user_channel_id FK "NOT NULL"
-        UUID label_id FK "NOT NULL"
+        BIGSERIAL id PK "auto increment"
+        BIGINT user_channel_id FK "NOT NULL"
+        BIGINT label_id FK "NOT NULL"
         TIMESTAMP created_at "NOT NULL"
     }
     
@@ -639,7 +639,29 @@ erDiagram
 
 ## 8. システムアーキテクチャ概要
 
-[クライアント（ブラウザ）] ↓ HTTPS [Next.js フロントエンド] ↓ REST API [NestJS バックエンド] ↓ ├─→ [AWS Cognito] ← 認証 ├─→ [PostgreSQL] ← データ永続化 └─→ [YouTube Data API v3] ← 配信情報取得 [バッチ処理（定期実行）] ├─ ゴールデンタイム: 1時間おき └─ その他時間帯: 3時間おき ↓ [NestJS バックエンド] → [YouTube Data API v3] → [PostgreSQL]
+```mermaid
+graph TD
+    A[クライアント<br/>ブラウザ] -->|HTTPS| B[Next.js<br/>フロントエンド]
+    B -->|REST API| C[NestJS<br/>バックエンド]
+    
+    C --> D[Supabase<br/>認証]
+    C --> E[PostgreSQL<br/>データベース]
+    C --> F[YouTube Data API v3<br/>配信情報取得]
+    
+    G[バッチ処理<br/>定期実行] --> C
+    G --> H[ゴールデンタイム<br/>1時間おき]
+    G --> I[その他時間帯<br/>3時間おき]
+    
+    classDef frontend fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef backend fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef external fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef batch fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    
+    class A,B frontend
+    class C,E backend
+    class D,F external
+    class G,H,I batch
+```
 
 ---
 
