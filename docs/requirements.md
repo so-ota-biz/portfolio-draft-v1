@@ -1,9 +1,9 @@
-# YouTube配信予定管理システム 要件定義書
+# 配信予定トラッカー（Stream Schedule Tracker） 要件定義書
 
 ## 1. システム概要
 
 ### 1.1 プロジェクト名
-未定（YouTube配信予定管理システム）
+配信予定トラッカー（Stream Schedule Tracker）
 
 ### 1.2 コンセプト
 自分が好きなYouTubeチャンネルの直近の配信予定やその内容を一覧化して、視聴したい配信を簡単に比較・選択できるWebアプリケーション。
@@ -47,7 +47,8 @@ YouTubeの標準機能では、配信開始時の通知しか受け取れず、�
 | AUTH-004 | アカウント削除 | ユーザーアカウントと関連データの完全削除 | 高 |
 
 **実装詳細:**
-- 認証基盤としてAWS Cognitoを使用
+- 認証基盤としてSupabaseを使用
+- バックエンドでSupabaseの公開鍵を使ってJWTの妥当性をチェック
 - 現時点では権限レベルの差異は設けない（認可機能は後回し）
 
 #### 2.1.2 YouTubeチャンネル管理機能
@@ -56,11 +57,13 @@ YouTubeの標準機能では、配信開始時の通知しか受け取れず、�
 | CHANNEL-001 | チャンネルID登録 | YouTubeチャンネルIDをユーザーアカウントに紐付けて登録 | 高 |
 | CHANNEL-002 | チャンネルID削除 | 登録済みチャンネルIDの削除 | 高 |
 | CHANNEL-003 | チャンネル一覧表示 | ユーザーが登録しているチャンネルの一覧表示 | 高 |
+| CHANNEL-004 | チャンネル情報編集 | 登録済みチャンネルの付随情報（メモ）の編集 | 高 |
 
 **実装詳細:**
 - ユーザーは複数のチャンネルIDを登録可能
 - チャンネルIDはYouTube URL形式またはID直接入力の両方に対応
 - 登録時にチャンネルの存在確認を実施
+- 各チャンネルにユーザーが任意のテキスト（メモ）を付随情報として登録可能
 
 #### 2.1.3 配信予定情報取得機能（バッチ処理）
 | 機能ID | 機能名 | 説明 | 優先度 |
@@ -124,6 +127,21 @@ YouTubeの標準機能では、配信開始時の通知しか受け取れず、�
 | SEARCH-001 | キーワードチャンネル検索 | キーワードからYouTubeチャンネルを検索 | 中 |
 | SEARCH-002 | チャンネルプレビュー | 検索結果のチャンネル情報をプレビュー表示 | 中 |
 
+#### 2.2.4 ラベル管理機能
+| 機能ID | 機能名 | 説明 | 優先度 |
+|--------|--------|------|--------|
+| LABEL-001 | ラベル作成 | ユーザーが独自のラベル（「にじさんじ」「ホロライブ」等）を作成 | 中 |
+| LABEL-002 | ラベル編集 | 作成済みラベルの名前・色等の編集 | 中 |
+| LABEL-003 | ラベル削除 | 不要になったラベルの削除 | 中 |
+| LABEL-004 | チャンネルラベル付与 | 登録チャンネルにラベルを付与 | 中 |
+| LABEL-005 | ラベルフィルター | 配信予定一覧でラベルによる絞り込み表示 | 中 |
+
+**実装詳細:**
+- ユーザーごとに独自のラベルセットを管理可能
+- 1つのチャンネルに複数のラベルを付与可能
+- ラベルには名前と色情報を設定可能
+- 配信予定一覧画面でラベルによるフィルタリングが可能
+
 ---
 
 ## 3. 非機能要件
@@ -144,7 +162,7 @@ YouTubeの標準機能では、配信開始時の通知しか受け取れず、�
 ### 3.3 セキュリティ要件
 | ID | 項目 | 要件 |
 |----|------|------|
-| SEC-001 | 認証 | AWS Cognitoによる認証実装、パスワードはハッシュ化保存 |
+| SEC-001 | 認証 | Supabaseによる認証実装、バックエンドでJWTの妥当性をチェック |
 | SEC-002 | 通信暗号化 | HTTPS通信の強制（HTTP接続は自動的にHTTPSへリダイレクト） |
 | SEC-003 | データアクセス制御 | ユーザーは自身のデータのみアクセス可能 |
 | SEC-004 | APIセキュリティ | 認証トークンによるAPI呼び出し制限 |
@@ -237,6 +255,17 @@ YouTubeの標準機能では、配信開始時の通知しか受け取れず、�
 - 削除前に確認ダイアログが表示される
 - 削除後、そのチャンネルの配信予定が一覧から消える
 
+#### US-006: チャンネル情報編集
+**As a** ログインユーザー
+**I want to** 登録したチャンネルにメモ情報を追加・編集したい
+**So that** チャンネルに関する個人的な情報やメモを保存できる
+
+**受け入れ条件:**
+- チャンネル一覧から編集ボタンで編集画面にアクセス可能
+- メモ欄にテキストを自由に入力・編集可能
+- 保存後、チャンネル一覧やその他の画面でメモが表示される
+- メモは空欄でも保存可能
+
 ### 4.2 拡張ユーザーストーリー（将来実装）
 
 #### US-101: 配信アーカイブ保存
@@ -258,6 +287,39 @@ YouTubeの標準機能では、配信開始時の通知しか受け取れず、�
 - キーワード入力で候補チャンネルが表示される
 - 検索結果からワンクリックで登録可能
 - チャンネルのプレビュー情報が表示される
+
+#### US-103: ラベル作成・管理
+**As a** ログインユーザー
+**I want to** 独自のラベル（「にじさんじ」「ホロライブ」等）を作成・編集・削除したい
+**So that** チャンネルを分類・整理できる
+
+**受け入れ条件:**
+- ラベル名と色を指定してラベルを作成可能
+- 作成済みラベルの名前・色を編集可能
+- 不要なラベルを削除可能（関連付けられたチャンネルも同時に解除）
+- 同一名のラベルは作成不可
+
+#### US-104: チャンネルラベル付与
+**As a** ログインユーザー
+**I want to** 登録チャンネルにラベルを付与したい
+**So that** チャンネルを視覚的に分類・識別できる
+
+**受け入れ条件:**
+- チャンネル編集画面でラベルを複数選択可能
+- 1つのチャンネルに複数のラベルを付与可能
+- ラベルの付与・解除が簡単に操作可能
+- チャンネル一覧でラベルが視覚的に表示される
+
+#### US-105: ラベルフィルター
+**As a** ログインユーザー
+**I want to** 配信予定一覧をラベルで絞り込みたい
+**So that** 特定のグループの配信予定のみを確認できる
+
+**受け入れ条件:**
+- 配信予定一覧画面でラベルによるフィルタリングが可能
+- 複数ラベルの組み合わせフィルタリングが可能
+- フィルター状態が明確に表示される
+- フィルターのクリア機能がある
 
 ---
 
@@ -366,7 +428,7 @@ graph TD
 | カラム名 | データ型 | 制約 | 説明 |
 |---------|---------|------|------|
 | id | UUID | PRIMARY KEY | ユーザーID |
-| cognito_user_id | VARCHAR(255) | UNIQUE, NOT NULL | AWS CognitoのユーザーID |
+| supabase_user_id | UUID | UNIQUE, NOT NULL | SupabaseのユーザーID |
 | email | VARCHAR(255) | UNIQUE, NOT NULL | メールアドレス |
 | created_at | TIMESTAMP | NOT NULL | 作成日時 |
 | updated_at | TIMESTAMP | NOT NULL | 更新日時 |
@@ -387,7 +449,9 @@ graph TD
 | id | UUID | PRIMARY KEY | 関連ID |
 | user_id | UUID | FOREIGN KEY, NOT NULL | ユーザーID |
 | channel_id | UUID | FOREIGN KEY, NOT NULL | チャンネルID |
+| memo | TEXT | | ユーザーが入力するチャンネル付随情報 |
 | created_at | TIMESTAMP | NOT NULL | 登録日時 |
+| updated_at | TIMESTAMP | NOT NULL | 更新日時 |
 
 **制約:** (user_id, channel_id) に UNIQUE 制約
 
@@ -418,6 +482,28 @@ graph TD
 | created_at | TIMESTAMP | NOT NULL | 作成日時 |
 | updated_at | TIMESTAMP | NOT NULL | 更新日時 |
 
+#### 6.1.6 ラベル（Labels）※将来実装
+| カラム名 | データ型 | 制約 | 説明 |
+|---------|---------|------|------|
+| id | UUID | PRIMARY KEY | ラベルID |
+| user_id | UUID | FOREIGN KEY, NOT NULL | ユーザーID |
+| name | VARCHAR(255) | NOT NULL | ラベル名 |
+| color | VARCHAR(7) | | ラベル色（HEXコード） |
+| created_at | TIMESTAMP | NOT NULL | 作成日時 |
+| updated_at | TIMESTAMP | NOT NULL | 更新日時 |
+
+**制約:** (user_id, name) に UNIQUE 制約
+
+#### 6.1.7 ユーザーチャンネルラベル関連（UserChannelLabels）※将来実装
+| カラム名 | データ型 | 制約 | 説明 |
+|---------|---------|------|------|
+| id | UUID | PRIMARY KEY | 関連ID |
+| user_channel_id | UUID | FOREIGN KEY, NOT NULL | ユーザーチャンネル関連ID |
+| label_id | UUID | FOREIGN KEY, NOT NULL | ラベルID |
+| created_at | TIMESTAMP | NOT NULL | 作成日時 |
+
+**制約:** (user_channel_id, label_id) に UNIQUE 制約
+
 ### 6.2 ER図
 
 ```mermaid
@@ -427,10 +513,13 @@ erDiagram
     Channels ||--o{ Streams : "has"
     Users ||--o{ Archives : "creates"
     Streams ||--o{ Archives : "archived in"
+    Users ||--o{ Labels : "owns"
+    UserChannels ||--o{ UserChannelLabels : "has labels"
+    Labels ||--o{ UserChannelLabels : "applied to"
 
     Users {
         UUID id PK
-        VARCHAR cognito_user_id "UNIQUE, NOT NULL"
+        UUID supabase_user_id "UNIQUE, NOT NULL"
         VARCHAR email "UNIQUE, NOT NULL"
         TIMESTAMP created_at "NOT NULL"
         TIMESTAMP updated_at "NOT NULL"
@@ -449,7 +538,9 @@ erDiagram
         UUID id PK
         UUID user_id FK "NOT NULL"
         UUID channel_id FK "NOT NULL"
+        TEXT memo
         TIMESTAMP created_at "NOT NULL"
+        TIMESTAMP updated_at "NOT NULL"
     }
 
     Streams {
@@ -475,6 +566,22 @@ erDiagram
         INTEGER rating
         TIMESTAMP created_at "NOT NULL"
         TIMESTAMP updated_at "NOT NULL"
+    }
+
+    Labels {
+        UUID id PK
+        UUID user_id FK "NOT NULL"
+        VARCHAR name "NOT NULL"
+        VARCHAR color
+        TIMESTAMP created_at "NOT NULL"
+        TIMESTAMP updated_at "NOT NULL"
+    }
+
+    UserChannelLabels {
+        UUID id PK
+        UUID user_channel_id FK "NOT NULL"
+        UUID label_id FK "NOT NULL"
+        TIMESTAMP created_at "NOT NULL"
     }
     
 ```
@@ -521,7 +628,7 @@ erDiagram
 ### 7.3 認証
 | 技術 | 用途 |
 |------|------|
-| AWS Cognito | ユーザー認証・管理 |
+| Supabase | ユーザー認証・管理、JWT発行 |
 
 ### 7.4 外部API
 | API | 用途 |
